@@ -60,7 +60,7 @@ static ShaderProgramSource ParseShader(const std::string& filepath)
 
 static unsigned int CompileShader(unsigned int type, const std::string& source)
 {
-	GLCall(unsigned int id = glCreateShader(type));
+	GLCall(unsigned int id = glCreateShader(type))   ;
 	const char* src = source.c_str();
 	GLCall(glShaderSource(id, 1, &src, nullptr));
 	GLCall(glCompileShader(id));
@@ -124,7 +124,7 @@ int main(void)
 		return -1;
 	}
 
-	std::cout << glGetString(GL_VERSION) << std::endl;
+	GLCall(std::cout << glGetString(GL_VERSION) << std::endl);
 
 	float positions[] = {
 		-0.5f, -0.5f, //0
@@ -152,13 +152,20 @@ int main(void)
 	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW));
 
 	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-	std::cout << "Vertex source code: " << std::endl;
+	std::cout << "vertex source code: " << std::endl;
 	std::cout << source.vertexSource << std::endl;
-	std::cout << "Fragment source code: " << std::endl;
+	std::cout << "fragment source code: " << std::endl;
 	std::cout << source.fragmentSource << std::endl;
 
 	unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource);
 	GLCall(glUseProgram(shader));
+
+	int location = glGetUniformLocation(shader, "u_Color");
+	ASSERT(location != -1);
+
+	float r = 0.9f, g = 0.9f, b = 0.3f, incrementR = 0.05f, incrementG = 0.05f, incrementB = 0.05f;
+
+	GLCall(glUniform4f(location, r, g, b, 1.0f));
 
 	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
 
@@ -167,8 +174,26 @@ int main(void)
 	while (!glfwWindowShouldClose(window))
 	{
 		/* Render here */
-		glClear(GL_COLOR_BUFFER_BIT);
+		GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
+		if (r >= 1.0f)
+			incrementR = -0.05f;
+		else if (r <= 0.0f)
+			incrementR = 0.05f;
+		if (g >= 1.0f)
+			incrementG = -0.05f;
+		else if (g <= 0.0f)
+			incrementG = 0.05f;
+		if (b >= 1.0f)
+			incrementB = -0.05f;
+		else if (b <= 0.0f)
+			incrementB = 0.05f;
+
+		r += incrementR;
+		g += incrementG;
+		b += incrementB;
+
+		GLCall(glUniform4f(location, r, g, b, 1.0f));
 		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); 
 
 		/* Swap front and back buffers */
